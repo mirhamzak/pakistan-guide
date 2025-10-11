@@ -412,7 +412,7 @@ export default function HomeScreen() {
                 borderColor: colors.blurBorder,
               }]}>
                 <TouchableOpacity
-                  style={styles.customSwitch}
+                  style={[styles.customSwitch, { backgroundColor: colors.modeSwitch }]}
                   onPress={toggleMode}
                   activeOpacity={0.7}
                 >
@@ -432,12 +432,13 @@ export default function HomeScreen() {
                       },
                     ]}
                   >
-                    <Text style={{ color: colors.text }}>{isTouristMode ? 'Tourist' : 'Citizen'}</Text>
+                    <Text style={{ color: isTouristMode ? colors.touristTxt : colors.touristTxt, fontSize: 15, fontWeight: '600' }}>{isTouristMode ? 'Tourist' : 'Citizen'}</Text>
                   </Animated.View>
-                  <Text style={{ color: colors.text, position: 'absolute', top: 16, left: isTouristMode ? 25 : null, right: isTouristMode ? null : 25 }}>{!isTouristMode ? 'Tourist' : 'Citizen'}</Text>
+                  <Text style={{ color: colors.text, position: 'absolute', top: 16, fontSize: 15, fontWeight: '600', left: isTouristMode ? 25 : null, right: isTouristMode ? null : 25 }}>{!isTouristMode ? 'Tourist' : 'Citizen'}</Text>
                 </TouchableOpacity>
               </Animated.View>
             </ThemedView>
+
             <ThemedView style={[styles.headerContent, { backgroundColor: colors.cardHeader }]}>
               <ThemedView style={[styles.titleContainer, { backgroundColor: colors.cardHeader }]}>
                 <ThemedText type="title" style={[styles.title, { color: colors.tint }]}>
@@ -680,7 +681,6 @@ const styles = StyleSheet.create({
     borderRadius: 25,
     padding: 6,
     position: 'relative',
-    backgroundColor: 'transparent',
   },
   switchThumb: {
     width: 104,

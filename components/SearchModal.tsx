@@ -210,7 +210,7 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
     return parts.map((part, index) => {
       if (regex.test(part)) {
         return (
-          <ThemedText key={index} style={{ backgroundColor: colors.tint + '30', fontWeight: '600' }}>
+          <ThemedText key={index} style={{ backgroundColor: colors.tint + '30', fontWeight: '600', color: colors.text }}>
             {part}
           </ThemedText>
         );
@@ -251,7 +251,6 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
       onRequestClose={onClose}
     >
       <ThemedView style={[styles.container, { backgroundColor: colors.background }]}>
-        {/* Header */}
         <ThemedView style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
           <TouchableOpacity onPress={onClose} style={styles.closeButton}>
             <IconSymbol name="xmark" size={24} color={colors.textSecondary} />
@@ -267,8 +266,6 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
           showsVerticalScrollIndicator={false}
           contentContainerStyle={{ flexGrow: 1 }}
         >
-
-          {/* Search Bar */}
           <ThemedView style={[styles.searchContainer, { backgroundColor: colors.card, borderColor: colors.border }]}>
             <IconSymbol name="magnifyingglass" size={20} color={colors.textSecondary} style={styles.searchIcon} />
             <TextInput
@@ -338,7 +335,6 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
             </ThemedView>
           )}
 
-          {/* Search Results */}
           <ThemedView style={[styles.resultsContainer, { backgroundColor: colors.card }]}>
             {isSearching ? (
               <ThemedView style={styles.loadingContainer}>
@@ -366,7 +362,7 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
                 </ThemedText>
               </ThemedView>
             ) : (
-              <ThemedView style={styles.resultsList}>
+              <ThemedView style={[styles.resultsList, { backgroundColor: colors.card }]}>
                 {searchResults.map((result, index) => (
                   <TouchableOpacity
                     key={`${result.searchType}-${index}`}
