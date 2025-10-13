@@ -20,12 +20,12 @@ export default {
             },
             edgeToEdgeEnabled: false,
             predictiveBackGestureEnabled: false,
-            hardwareAccelerated: false,
+            hardwareAccelerated: false, // Disable hardware acceleration completely
             softwareKeyboardLayoutMode: "pan",
             permissions: [
                 "android.permission.INTERNET"
             ],
-            // Disable hardware acceleration to prevent bitmap issues
+            // Force software rendering to prevent hardware bitmap issues
             config: {
                 googleMaps: {
                     apiKey: "your-google-maps-api-key"
@@ -36,6 +36,17 @@ export default {
                 application: {
                     android: {
                         hardwareAccelerated: false,
+                        largeHeap: true,
+                        // Force software rendering for all activities
+                        activities: [
+                            {
+                                name: '.MainActivity',
+                                android: {
+                                    hardwareAccelerated: false,
+                                    configChanges: 'orientation|keyboardHidden|screenSize',
+                                },
+                            },
+                        ],
                     },
                 },
             },

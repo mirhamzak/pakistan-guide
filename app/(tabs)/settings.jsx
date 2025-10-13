@@ -6,7 +6,8 @@ import { useTheme } from '@/contexts/ThemeContext';
 import { initializePakistanGuideData } from '@/services/dataInitializer';
 import { storageService } from '@/services/storage';
 import { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
     const { theme, themeMode, setThemeMode, toggleTheme } = useTheme();

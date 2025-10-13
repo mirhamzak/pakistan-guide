@@ -7,7 +7,8 @@ import { useScrollDetection } from '@/hooks/useScrollDetection';
 import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LocalLawsScreen() {
     const { theme } = useTheme();

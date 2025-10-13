@@ -1,11 +1,10 @@
 import { ThemedText } from '@/components/themed-text';
-import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { Colors } from '@/constants/colors';
 import { useTabBar } from '@/contexts/TabBarContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { MaterialIcons } from '@expo/vector-icons';
-import { BlurView } from 'expo-blur';
 import React, { useEffect } from 'react';
-import { Animated, Platform, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { Animated, StyleSheet, TouchableOpacity, View } from 'react-native';
 
 const tabs = [
     {
@@ -43,47 +42,45 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     const colors = Colors[theme];
     const { isCollapsed } = useTabBar();
 
-    const animatedHeight = React.useRef(new Animated.Value(TAB_BAR_HEIGHT)).current;
+    const animatedScaleY = React.useRef(new Animated.Value(1)).current;
     const animatedOpacity = React.useRef(new Animated.Value(1)).current;
     const animatedWidth = React.useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        const targetHeight = isCollapsed ? TAB_BAR_HEIGHT * 0.5 : TAB_BAR_HEIGHT;
+        const targetScaleY = isCollapsed ? 0.5 : 1;
         const targetOpacity = isCollapsed ? 0.7 : 1;
         const targetWidth = isCollapsed ? 0.9 : 1;
 
         Animated.parallel([
-            Animated.timing(animatedHeight, {
-                toValue: targetHeight,
+            Animated.timing(animatedScaleY, {
+                toValue: targetScaleY,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver: false, // Use software rendering
             }),
             Animated.timing(animatedOpacity, {
                 toValue: targetOpacity,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver: false, // Use software rendering
             }),
             Animated.timing(animatedWidth, {
                 toValue: targetWidth,
                 duration: 300,
-                useNativeDriver: true,
+                useNativeDriver: false, // Use software rendering
             }),
         ]).start();
-    }, [isCollapsed, animatedHeight, animatedOpacity, animatedWidth]);
+    }, [isCollapsed, animatedScaleY, animatedOpacity, animatedWidth]);
 
     return (
-        <Animated.View style={[styles.container, { height: animatedHeight }]}>
+        <Animated.View style={[styles.container, {
+            transform: [{ scaleY: animatedScaleY }]
+        }]}>
             <Animated.View style={[styles.blurContainer, {
                 backgroundColor: colors.blurBackground,
                 borderColor: colors.blurBorder,
                 transform: [{ scaleX: animatedWidth }]
             }]}>
-                <BlurView
-                    intensity={40}
-                    tint={theme === 'dark' ? 'dark' : 'light'}
-                    experimentalBlurMethod={Platform.OS === 'android' ? 'dimezisBlurView' : undefined}
-                    style={styles.blurView}
-                >
+                {/* Replace BlurView with simple View to avoid hardware bitmap issues */}
+                <View style={[styles.blurView, { backgroundColor: colors.blurBackground }]}>
                     <Animated.View style={[styles.tabBar, { opacity: animatedOpacity }]}>
                         {state.routes.map((route, index) => {
                             const { options } = descriptors[route.key];
@@ -153,7 +150,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                             );
                         })}
                     </Animated.View>
-                </BlurView>
+                </View>
             </Animated.View>
         </Animated.View>
     );

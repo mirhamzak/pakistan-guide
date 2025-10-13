@@ -9,7 +9,8 @@ import { initializePakistanGuideData } from '@/services/dataInitializer';
 import { storageService } from '@/services/storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Linking, SafeAreaView, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Alert, Animated, Dimensions, Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
 
@@ -394,12 +395,12 @@ export default function HomeScreen() {
         const newMode = !isTouristMode;
         setIsTouristMode(newMode);
 
-        // Use a simpler animation approach to avoid hardware bitmap issues
+        // Use software rendering to avoid hardware bitmap issues
         if (isAnimationReady) {
             Animated.timing(switchAnimation, {
                 toValue: newMode ? 1 : 0,
                 duration: 200,
-                useNativeDriver: true,
+                useNativeDriver: false, // Use software rendering
             }).start();
         }
     };

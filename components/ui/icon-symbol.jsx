@@ -1,6 +1,7 @@
 // Fallback for using MaterialIcons on Android and web.
 
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import { Platform } from 'react-native';
 
 /**
  * Add your SF Symbols to Material Icons mappings here.
@@ -65,7 +66,14 @@ export function IconSymbol({
             color={color}
             size={size}
             name={iconName}
-            style={[{ resizeMode: 'contain' }, style]}
+            style={[{
+                resizeMode: 'contain',
+                // Force software rendering for icons to avoid hardware bitmap issues
+                ...(Platform.OS === 'android' && {
+                    renderToHardwareTextureAndroid: false,
+                    shouldRasterizeIOS: false
+                })
+            }, style]}
         />
     );
 }

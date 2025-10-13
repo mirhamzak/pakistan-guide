@@ -5,7 +5,8 @@ import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Stack, useRouter } from 'expo-router';
 import { useState } from 'react';
-import { Alert, Linking, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SimHelplineScreen() {
     const { theme } = useTheme();

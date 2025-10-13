@@ -5,7 +5,8 @@ import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
 import { storageService } from '@/services/storage';
 import { useEffect, useState } from 'react';
-import { Alert, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function FavouritesScreen() {
     const { theme } = useTheme();

@@ -1,32 +1,41 @@
 // This file provides additional Android configuration to fix hardware bitmap issues
 export default {
     android: {
-        // Add these configurations to your app.config.js or app.json
+        // Force software rendering to avoid hardware bitmap issues
         config: {
-            // Disable hardware acceleration for specific components
             hardwareAccelerated: false,
-            // Force software rendering to avoid hardware bitmap issues
             softwareRendering: true,
+            // Additional Android-specific settings
+            android: {
+                hardwareAccelerated: false,
+                largeHeap: true,
+                // Force software rendering for all components
+                renderToHardwareTextureAndroid: false,
+                shouldRasterizeIOS: false,
+            },
         },
-        // Add these to the android section
+        // Comprehensive manifest configuration
         manifest: {
             application: {
-                // Disable hardware acceleration at the application level
                 android: {
                     hardwareAccelerated: false,
-                },
-                // Add specific activity configurations
-                activities: [
-                    {
-                        name: '.MainActivity',
-                        android: {
-                            hardwareAccelerated: false,
-                            // Force software rendering
-                            configChanges: 'orientation|keyboardHidden|screenSize',
+                    largeHeap: true,
+                    // Disable hardware acceleration for all activities
+                    activities: [
+                        {
+                            name: '.MainActivity',
+                            android: {
+                                hardwareAccelerated: false,
+                                configChanges: 'orientation|keyboardHidden|screenSize',
+                                // Force software rendering
+                                renderToHardwareTextureAndroid: false,
+                                shouldRasterizeIOS: false,
+                            },
                         },
-                    },
-                ],
+                    ],
+                },
             },
         },
     },
 };
+

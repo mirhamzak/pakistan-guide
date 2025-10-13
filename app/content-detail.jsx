@@ -4,7 +4,8 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
 import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
-import { Alert, Linking, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { Alert, Linking, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function ContentDetailScreen() {
     const { theme } = useTheme();
