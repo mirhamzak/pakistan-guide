@@ -1,0 +1,68 @@
+export default {
+    expo: {
+        name: "pakistan-guide",
+        slug: "pakistan-guide",
+        version: "1.0.0",
+        orientation: "portrait",
+        icon: "./assets/images/icon.png",
+        scheme: "pakistanguide",
+        userInterfaceStyle: "automatic",
+        newArchEnabled: false,
+        ios: {
+            supportsTablet: true
+        },
+        android: {
+            adaptiveIcon: {
+                backgroundColor: "#E6F4FE",
+                foregroundImage: "./assets/images/android-icon-foreground.png",
+                backgroundImage: "./assets/images/android-icon-background.png",
+                monochromeImage: "./assets/images/android-icon-monochrome.png"
+            },
+            edgeToEdgeEnabled: false,
+            predictiveBackGestureEnabled: false,
+            hardwareAccelerated: false,
+            softwareKeyboardLayoutMode: "pan",
+            permissions: [
+                "android.permission.INTERNET"
+            ],
+            // Disable hardware acceleration to prevent bitmap issues
+            config: {
+                googleMaps: {
+                    apiKey: "your-google-maps-api-key"
+                }
+            },
+            // Add manifest modifications to force software rendering
+            manifest: {
+                application: {
+                    android: {
+                        hardwareAccelerated: false,
+                    },
+                },
+            },
+        },
+        web: {
+            output: "static",
+            favicon: "./assets/images/favicon.png"
+        },
+        plugins: [
+            "expo-router",
+            [
+                "expo-splash-screen",
+                {
+                    image: "./assets/images/icon.png",
+                    imageWidth: 50,
+                    imageHeight: 50,
+                    resizeMode: "contain",
+                    backgroundColor: "#ffffff",
+                    dark: {
+                        backgroundColor: "#000000"
+                    }
+                }
+            ]
+        ],
+        experiments: {
+            typedRoutes: true,
+            reactCompiler: true
+        }
+    }
+};
