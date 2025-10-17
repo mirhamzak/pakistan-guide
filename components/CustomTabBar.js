@@ -42,18 +42,18 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
     const colors = Colors[theme];
     const { isCollapsed } = useTabBar();
 
-    const animatedScaleY = React.useRef(new Animated.Value(1)).current;
+    const animatedHeight = React.useRef(new Animated.Value(80)).current;
     const animatedOpacity = React.useRef(new Animated.Value(1)).current;
     const animatedWidth = React.useRef(new Animated.Value(1)).current;
 
     useEffect(() => {
-        const targetScaleY = isCollapsed ? 0.5 : 1;
+        const targetHeight = isCollapsed ? 50 : 80;
         const targetOpacity = isCollapsed ? 0.7 : 1;
         const targetWidth = isCollapsed ? 0.9 : 1;
 
         Animated.parallel([
-            Animated.timing(animatedScaleY, {
-                toValue: targetScaleY,
+            Animated.timing(animatedHeight, {
+                toValue: targetHeight,
                 duration: 300,
                 useNativeDriver: false, // Use software rendering
             }),
@@ -68,11 +68,11 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                 useNativeDriver: false, // Use software rendering
             }),
         ]).start();
-    }, [isCollapsed, animatedScaleY, animatedOpacity, animatedWidth]);
+    }, [isCollapsed, animatedHeight, animatedOpacity, animatedWidth]);
 
     return (
         <Animated.View style={[styles.container, {
-            transform: [{ scaleY: animatedScaleY }]
+            height: animatedHeight
         }]}>
             <Animated.View style={[styles.blurContainer, {
                 backgroundColor: colors.blurBackground,
@@ -119,7 +119,7 @@ export default function CustomTabBar({ state, descriptors, navigation }) {
                                     onLongPress={onLongPress}
                                     style={[styles.tabItem, isCollapsed && styles.tabItemCollapsed]}
                                 >
-                                    <View style={[styles.tabContent, isCollapsed && styles.tabContentCollapsed]}>
+                                    <View>
                                         {isCollapsed ? (
                                             <ThemedText
                                                 style={[
@@ -162,7 +162,6 @@ const styles = StyleSheet.create({
         bottom: 7,
         left: 0,
         right: 0,
-        height: 80,
         justifyContent: 'flex-end',
     },
     blurContainer: {
@@ -173,8 +172,6 @@ const styles = StyleSheet.create({
         borderRadius: 100,
         overflow: 'hidden',
         borderWidth: 1,
-        borderColor: 'rgba(255, 255, 255, 0.2)',
-        backgroundColor: 'rgba(255, 255, 255, 0.1)',
         shadowColor: '#000',
         shadowOffset: {
             width: 0,
@@ -199,11 +196,11 @@ const styles = StyleSheet.create({
         justifyContent: 'center',
     },
     tabContent: {
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingVertical: 12,
-        paddingHorizontal: 16,
-        minWidth: 50,
+        // alignItems: 'center',
+        // justifyContent: 'center',
+        // paddingVertical: 12,
+        // paddingHorizontal: 16,
+        // minWidth: 50,
     },
     tabItemCollapsed: {
         minWidth: 35,
@@ -213,11 +210,17 @@ const styles = StyleSheet.create({
         // paddingHorizontal: 6,
         minWidth: 35,
         height: 100,
+        backgroundColor: 'red',
         // alignItems: 'center',
         // justifyContent: 'center',
     },
     tabText: {
-        fontSize: 14,
+        fontSize: 18,
         textAlign: 'center',
+    },
+    tabTextCollapsed: {
+        // fontSize: 14,
+        textAlign: 'center',
+        // transform: [{ scale: 1 }], // Prevent text from scaling with the container
     },
 });

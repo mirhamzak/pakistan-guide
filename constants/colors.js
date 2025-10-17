@@ -25,8 +25,8 @@ export const Colors = {
         language: '#AF52DE',
         law: '#FF9500',
         cultural: '#FF6B6B',
-        blurBackground: 'rgba(255, 255, 255, 0.1)',
-        blurBorder: 'rgba(255, 255, 255, 0.2)',
+        blurBackground: '#FFFFFF',
+        blurBorder: '#E0E0E0',
     },
     dark: {
         background: '#000000',
@@ -52,7 +52,7 @@ export const Colors = {
         language: '#AF52DE',
         law: '#FF9500',
         cultural: '#FF6B6B',
-        blurBackground: 'rgba(17, 17, 17, 0.9)',
-        blurBorder: 'rgba(255, 255, 255, 0.1)',
+        blurBackground: '#1A1A1A',
+        blurBorder: '#333333',
     },
 };
