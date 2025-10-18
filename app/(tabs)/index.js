@@ -23,9 +23,9 @@ export default function HomeScreen() {
     const [isInitializing, setIsInitializing] = useState(false);
     const [lastSyncDate, setLastSyncDate] = useState(null);
     const [searchModalVisible, setSearchModalVisible] = useState(false);
-    const [isTouristMode, setIsTouristMode] = useState(true);
+    const [isTouristMode, setIsTouristMode] = useState(false);
     const [isGridView, setIsGridView] = useState(false);
-    const switchAnimation = useRef(new Animated.Value(1)).current;
+    const switchAnimation = useRef(new Animated.Value(0)).current;
     const [isAnimationReady, setIsAnimationReady] = useState(false);
 
     useEffect(() => {

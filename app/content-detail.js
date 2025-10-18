@@ -1,3 +1,4 @@
+import InteractiveChips from '@/components/InteractiveChips';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -180,9 +181,17 @@ export default function ContentDetailScreen() {
                         {/* Content */}
                         <ThemedView style={[styles.contentContainer, { backgroundColor: colors.background }]}>
                             <ThemedView style={[styles.contentCard, { backgroundColor: colors.card }]}>
-                                <ThemedText style={[styles.contentText, { color: colors.text }]}>
-                                    {content}
-                                </ThemedText>
+                                {type === 'travel' && category === 'attractions' ? (
+                                    <InteractiveChips
+                                        text={content}
+                                        terms={['Karakoram Highway', 'Hunza Valley', 'Lahore Fort', 'Mohenjo-daro', 'Skardu', 'Gilgit', 'Swat Valley', 'Murree', 'Naran', 'Kaghan', 'Fairy Meadows', 'Nanga Parbat', 'K2', 'Baltit Fort', 'Shalimar Gardens', 'Badshahi Mosque', 'Faisal Mosque', 'Minar-e-Pakistan', 'Taxila', 'Harappa', 'Multan', 'Peshawar', 'Quetta', 'Karachi', 'Islamabad', 'Rawalpindi']}
+                                        icon="location.fill"
+                                    />
+                                ) : (
+                                    <ThemedText style={[styles.contentText, { color: colors.text }]}>
+                                        {content}
+                                    </ThemedText>
+                                )}
                             </ThemedView>
 
                             {/* Language-specific content */}

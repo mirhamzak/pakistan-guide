@@ -2,12 +2,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
-import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LanguagePhrasesScreen() {
@@ -15,31 +15,16 @@ export default function LanguagePhrasesScreen() {
     const colors = Colors[theme];
     const router = useRouter();
     const { handleScroll, resetScrollPosition } = useScrollDetection();
-    const [languagePhrases, setLanguagePhrases] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { getDataByType, isDataLoaded } = useData();
     const [selectedCategory, setSelectedCategory] = useState(null);
 
+    const languagePhrases = getDataByType('language');
+
     useEffect(() => {
-        loadLanguagePhrases();
         return () => {
             resetScrollPosition();
         };
     }, [resetScrollPosition]);
-
-    const loadLanguagePhrases = async () => {
-        try {
-            setLoading(true);
-            const data = await storageService.getAppData();
-            if (data?.languagePhrases) {
-                setLanguagePhrases(data.languagePhrases);
-            }
-        } catch (error) {
-            console.error('Failed to load language phrases:', error);
-            Alert.alert('Error', 'Failed to load language phrases data');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleItemPress = (item) => {
         router.push({
@@ -120,7 +105,7 @@ export default function LanguagePhrasesScreen() {
         ? languagePhrases.filter(item => item.category === selectedCategory)
         : languagePhrases;
 
-    if (loading) {
+    if (!isDataLoaded) {
         return (
             <>
                 <Stack.Screen options={{ headerShown: false }} />

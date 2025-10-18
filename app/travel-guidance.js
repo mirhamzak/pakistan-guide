@@ -1,13 +1,14 @@
+import InteractiveChips from '@/components/InteractiveChips';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
-import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function TravelGuidanceScreen() {
@@ -15,30 +16,15 @@ export default function TravelGuidanceScreen() {
     const colors = Colors[theme];
     const router = useRouter();
     const { handleScroll, resetScrollPosition } = useScrollDetection();
-    const [travelGuidance, setTravelGuidance] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { getDataByType, isDataLoaded } = useData();
+
+    const travelGuidance = getDataByType('travel');
 
     useEffect(() => {
-        loadTravelGuidance();
         return () => {
             resetScrollPosition();
         };
     }, [resetScrollPosition]);
-
-    const loadTravelGuidance = async () => {
-        try {
-            setLoading(true);
-            const data = await storageService.getAppData();
-            if (data?.travelGuidance) {
-                setTravelGuidance(data.travelGuidance);
-            }
-        } catch (error) {
-            console.error('Failed to load travel guidance:', error);
-            Alert.alert('Error', 'Failed to load travel guidance data');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleItemPress = (item) => {
         router.push({
@@ -97,7 +83,7 @@ export default function TravelGuidanceScreen() {
     const safetyItems = travelGuidance.filter(item => item.category === 'safety');
     const tipItems = travelGuidance.filter(item => item.category === 'tips');
 
-    if (loading) {
+    if (!isDataLoaded) {
         return (
             <>
                 <Stack.Screen options={{ headerShown: false }} />
@@ -143,9 +129,17 @@ export default function TravelGuidanceScreen() {
                             <ThemedText style={[styles.itemTitle, { color: colors.text }]}>
                                 {item.title}
                             </ThemedText>
-                            <ThemedText style={[styles.itemDescription, { color: colors.textSecondary }]}>
-                                {item.description.length > 120 ? `${item.description.substring(0, 120)}...` : item.description}
-                            </ThemedText>
+                            {item.category === 'attractions' ? (
+                                <InteractiveChips
+                                    text={item.description.length > 120 ? `${item.description.substring(0, 120)}...` : item.description}
+                                    terms={['Karakoram Highway', 'Hunza Valley', 'Lahore Fort', 'Mohenjo-daro', 'Skardu', 'Gilgit', 'Swat Valley', 'Murree', 'Naran', 'Kaghan', 'Fairy Meadows', 'Nanga Parbat', 'K2', 'Baltit Fort', 'Shalimar Gardens', 'Badshahi Mosque', 'Faisal Mosque', 'Minar-e-Pakistan']}
+                                    icon="location.fill"
+                                />
+                            ) : (
+                                <ThemedText style={[styles.itemDescription, { color: colors.textSecondary }]}>
+                                    {item.description.length > 120 ? `${item.description.substring(0, 120)}...` : item.description}
+                                </ThemedText>
+                            )}
                             <ThemedView style={[styles.itemLocation, { backgroundColor: colors.card }]}>
                                 <IconSymbol name="location" size={12} color={colors.textSecondary} />
                                 <ThemedText style={[styles.locationText, { color: colors.textSecondary }]}>

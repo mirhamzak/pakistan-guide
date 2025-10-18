@@ -4,6 +4,7 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
 import { storageService } from '@/services/storage';
+import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Alert, ScrollView, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -11,6 +12,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 export default function SearchScreen() {
     const { theme } = useTheme();
     const colors = Colors[theme];
+    const router = useRouter();
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState([]);
     const [isSearching, setIsSearching] = useState(false);
@@ -173,6 +175,25 @@ export default function SearchScreen() {
         } catch (error) {
             console.error('Failed to clear search history:', error);
             Alert.alert('Error', 'Failed to clear search history');
+        }
+    };
+
+    const handleSearchResultPress = (result) => {
+        // Map search result types to their corresponding routes
+        const routeMap = {
+            general: '../general-knowledge',
+            emergency: '../emergency-info',
+            travel: '../travel-guidance',
+            language: '../language-phrases',
+            law: '../local-laws',
+            cultural: '../cultural-facts',
+        };
+
+        const route = routeMap[result.type];
+        if (route) {
+            router.push(route);
+        } else {
+            Alert.alert('Navigation', `Navigate to ${result.type} section`);
         }
     };
 
@@ -441,18 +462,23 @@ export default function SearchScreen() {
                         ) : (
                             <ThemedView style={[styles.resultsList, { backgroundColor: colors.background }]}>
                                 {searchResults.map((result) => (
-                                    <ThemedView key={result.id} style={[styles.resultCard, { backgroundColor: colors.card }]}>
-                                        <ThemedView style={styles.resultHeader}>
-                                            <ThemedView style={styles.resultHeaderLeft}>
+                                    <TouchableOpacity
+                                        key={result.id}
+                                        style={[styles.resultCard, { backgroundColor: colors.card }]}
+                                        onPress={() => handleSearchResultPress(result)}
+                                        activeOpacity={0.7}
+                                    >
+                                        <ThemedView style={[styles.resultHeader, { backgroundColor: colors.card }]}>
+                                            <ThemedView style={[styles.resultHeaderLeft, { backgroundColor: colors.card }]}>
                                                 <IconSymbol
                                                     name={getTypeIcon(result.type)}
                                                     size={20}
                                                     color={getTypeColor(result.type)}
                                                     style={styles.resultIcon}
                                                 />
-                                                <ThemedView style={styles.resultTitleContainer}>
-                                                    <ThemedText style={[styles.resultTitle, { color: colors.text }]}>
-                                                        {highlightText(result.title, searchQuery)}
+                                                    <ThemedView style={[styles.resultTitleContainer, { backgroundColor: colors.card }]}>
+                                                        <ThemedText style={[styles.resultTitle, { color: colors.text }]}>
+                                                            {highlightText(result.title, searchQuery)}
                                                     </ThemedText>
                                                     <ThemedText style={[styles.resultType, { color: colors.textSecondary }]}>
                                                         {result.type.charAt(0).toUpperCase() + result.type.slice(1)} • {result.category}
@@ -461,8 +487,11 @@ export default function SearchScreen() {
                                             </ThemedView>
 
                                             <TouchableOpacity
-                                                onPress={() => toggleBookmark(result)}
-                                                style={styles.bookmarkButton}
+                                                onPress={(e) => {
+                                                    e.stopPropagation(); // Prevent triggering the parent onPress
+                                                    toggleBookmark(result);
+                                                }}
+                                                style={[styles.bookmarkButton, { backgroundColor: colors.card }]}
                                             >
                                                 <IconSymbol
                                                     name={isBookmarked(result.id) ? "bookmark.fill" : "bookmark"}
@@ -476,12 +505,13 @@ export default function SearchScreen() {
                                             {highlightText(result.content, searchQuery)}
                                         </ThemedText>
 
-                                        <ThemedView style={styles.resultFooter}>
+                                        <ThemedView style={[styles.resultFooter, { backgroundColor: colors.card }]}>
                                             <ThemedText style={[styles.relevanceScore, { color: colors.textSecondary }]}>
                                                 Relevance: {Math.round(result.relevanceScore)}%
                                             </ThemedText>
+                                            <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
                                         </ThemedView>
-                                    </ThemedView>
+                                    </TouchableOpacity>
                                 ))}
                             </ThemedView>
                         )}
@@ -603,7 +633,8 @@ const styles = StyleSheet.create({
     },
     resultFooter: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     relevanceScore: {
         fontSize: 12,

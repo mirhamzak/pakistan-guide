@@ -23,5 +23,11 @@ config.transformer.android = {
     assetPlugins: ['expo-asset/tools/hashAssetFiles'],
 };
 
+// Add resolver for WASM files
+config.resolver.resolverMainFields = ['react-native', 'browser', 'main'];
+
+// Add platform-specific extensions
+config.resolver.platforms = ['ios', 'android', 'native', 'web'];
+
 module.exports = config;
 

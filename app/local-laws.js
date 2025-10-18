@@ -2,12 +2,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
-import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function LocalLawsScreen() {
@@ -15,31 +15,16 @@ export default function LocalLawsScreen() {
     const colors = Colors[theme];
     const router = useRouter();
     const { handleScroll, resetScrollPosition } = useScrollDetection();
-    const [localLaws, setLocalLaws] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { getDataByType, isDataLoaded } = useData();
     const [selectedCategory, setSelectedCategory] = useState(null);
 
+    const localLaws = getDataByType('law');
+
     useEffect(() => {
-        loadLocalLaws();
         return () => {
             resetScrollPosition();
         };
     }, [resetScrollPosition]);
-
-    const loadLocalLaws = async () => {
-        try {
-            setLoading(true);
-            const data = await storageService.getAppData();
-            if (data?.localLaws) {
-                setLocalLaws(data.localLaws);
-            }
-        } catch (error) {
-            console.error('Failed to load local laws:', error);
-            Alert.alert('Error', 'Failed to load local laws data');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleItemPress = (item) => {
         router.push({
@@ -129,7 +114,7 @@ export default function LocalLawsScreen() {
         ? localLaws.filter(item => item.category === selectedCategory)
         : localLaws;
 
-    if (loading) {
+    if (!isDataLoaded) {
         return (
             <>
                 <Stack.Screen options={{ headerShown: false }} />

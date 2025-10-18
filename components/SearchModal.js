@@ -324,13 +324,13 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
                         </ThemedView>
                     )}
 
-                    <ThemedView style={[styles.resultsContainer, { backgroundColor: colors.card }]}>
+                    <ThemedView style={[styles.resultsContainer, { backgroundColor: colors.background }]}>
                         {isSearching ? (
                             <ThemedView style={styles.loadingContainer}>
                                 <ThemedText style={{ color: colors.text }}>Searching...</ThemedText>
                             </ThemedView>
                         ) : searchResults.length === 0 && searchQuery.trim() ? (
-                            <ThemedView style={styles.emptyState}>
+                            <ThemedView style={[styles.emptyState, { backgroundColor: colors.card }]}>
                                 <IconSymbol name="magnifyingglass" size={48} color={colors.textSecondary} />
                                 <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
                                     No results found for "{searchQuery}"
@@ -344,14 +344,14 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
                                 </ThemedText>
                             </ThemedView>
                         ) : searchResults.length === 0 ? (
-                            <ThemedView style={[styles.emptyState, { backgroundColor: colors.card }]}>
+                            <ThemedView style={[styles.emptyState, { backgroundColor: colors.background }]}>
                                 <IconSymbol name="doc.text" size={48} color={colors.textSecondary} />
                                 <ThemedText style={[styles.emptyText, { color: colors.textSecondary }]}>
                                     Start typing to search home screen options
                                 </ThemedText>
                             </ThemedView>
                         ) : (
-                            <ThemedView style={[styles.resultsList, { backgroundColor: colors.card }]}>
+                            <ThemedView style={[styles.resultsList, { backgroundColor: colors.background }]}>
                                 {searchResults.map((result, index) => (
                                     <TouchableOpacity
                                         key={`${result.searchType}-${index}`}

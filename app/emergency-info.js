@@ -2,11 +2,11 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
-import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { Alert, Linking, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -15,30 +15,15 @@ export default function EmergencyInfoScreen() {
     const colors = Colors[theme];
     const router = useRouter();
     const { handleScroll, resetScrollPosition } = useScrollDetection();
-    const [emergencyInfo, setEmergencyInfo] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { getDataByType, isDataLoaded } = useData();
+
+    const emergencyInfo = getDataByType('emergency');
 
     useEffect(() => {
-        loadEmergencyInfo();
         return () => {
             resetScrollPosition();
         };
     }, [resetScrollPosition]);
-
-    const loadEmergencyInfo = async () => {
-        try {
-            setLoading(true);
-            const data = await storageService.getAppData();
-            if (data?.emergencyInfo) {
-                setEmergencyInfo(data.emergencyInfo);
-            }
-        } catch (error) {
-            console.error('Failed to load emergency info:', error);
-            Alert.alert('Error', 'Failed to load emergency information');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleCall = async (phoneNumber, title) => {
         try {
@@ -118,7 +103,7 @@ export default function EmergencyInfoScreen() {
     const mediumPriorityItems = emergencyInfo.filter(item => item.priority === 'medium');
     const lowPriorityItems = emergencyInfo.filter(item => item.priority === 'low');
 
-    if (loading) {
+    if (!isDataLoaded) {
         return (
             <>
                 <Stack.Screen options={{ headerShown: false }} />

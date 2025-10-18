@@ -2,12 +2,12 @@ import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
+import { useData } from '@/contexts/DataContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useScrollDetection } from '@/hooks/useScrollDetection';
-import { storageService } from '@/services/storage';
 import { Stack, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useEffect } from 'react';
+import { ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function CulturalFactsScreen() {
@@ -15,31 +15,16 @@ export default function CulturalFactsScreen() {
     const colors = Colors[theme];
     const router = useRouter();
     const { handleScroll, resetScrollPosition } = useScrollDetection();
-    const [culturalFacts, setCulturalFacts] = useState([]);
-    const [loading, setLoading] = useState(true);
+    const { getDataByType, isDataLoaded } = useData();
     const [selectedCategory, setSelectedCategory] = useState(null);
 
+    const culturalFacts = getDataByType('cultural');
+
     useEffect(() => {
-        loadCulturalFacts();
         return () => {
             resetScrollPosition();
         };
     }, [resetScrollPosition]);
-
-    const loadCulturalFacts = async () => {
-        try {
-            setLoading(true);
-            const data = await storageService.getAppData();
-            if (data?.culturalFacts) {
-                setCulturalFacts(data.culturalFacts);
-            }
-        } catch (error) {
-            console.error('Failed to load cultural facts:', error);
-            Alert.alert('Error', 'Failed to load cultural facts data');
-        } finally {
-            setLoading(false);
-        }
-    };
 
     const handleItemPress = (item) => {
         router.push({
@@ -129,7 +114,7 @@ export default function CulturalFactsScreen() {
         ? culturalFacts.filter(item => item.category === selectedCategory)
         : culturalFacts;
 
-    if (loading) {
+    if (!isDataLoaded) {
         return (
             <>
                 <Stack.Screen options={{ headerShown: false }} />

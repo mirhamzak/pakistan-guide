@@ -1,5 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SQLite from 'expo-sqlite';
+import { Platform } from 'react-native';
 
 const STORAGE_KEYS = {
     APP_DATA: 'pakistan_guide_data',
@@ -16,6 +17,12 @@ class StorageService {
 
     async initializeDatabase() {
         try {
+            // Skip SQLite initialization on web platform due to WASM issues
+            if (Platform.OS === 'web') {
+                console.log('Skipping SQLite initialization on web platform');
+                return;
+            }
+
             this.db = await SQLite.openDatabaseAsync('pakistan_guide.db');
 
             // Create tables for better query performance
@@ -235,9 +242,14 @@ class StorageService {
     }
 
     async getSearchSuggestions(query, limit = 10) {
-        if (!this.db || query.length < 2) return [];
+        if (query.length < 2) return [];
 
         try {
+            // Fallback to AsyncStorage-based search on web
+            if (Platform.OS === 'web' || !this.db) {
+                return await this.getSearchSuggestionsFromAsyncStorage(query, limit);
+            }
+
             const searchTerm = `%${query.toLowerCase()}%`;
             const suggestions = new Set();
 
@@ -287,9 +299,14 @@ class StorageService {
     }
 
     async getHomeScreenSearchSuggestions(query, limit = 10) {
-        if (!this.db || query.length < 2) return [];
+        if (query.length < 2) return [];
 
         try {
+            // Fallback to AsyncStorage-based search on web
+            if (Platform.OS === 'web' || !this.db) {
+                return await this.getHomeScreenSearchSuggestionsFromAsyncStorage(query, limit);
+            }
+
             const searchTerm = `%${query.toLowerCase()}%`;
             const suggestions = new Set();
 
@@ -389,12 +406,13 @@ class StorageService {
     }
 
     async searchContent(query) {
-        if (!this.db) {
-            console.log('Database not initialized');
-            return [];
-        }
-
         try {
+            // Fallback to AsyncStorage-based search on web
+            if (Platform.OS === 'web' || !this.db) {
+                console.log('Using AsyncStorage fallback for search');
+                return await this.searchContentFromAsyncStorage(query);
+            }
+
             console.log('Searching with query:', query);
             const searchTerm = `%${query.toLowerCase()}%`;
             const results = [];
@@ -731,6 +749,197 @@ class StorageService {
         } catch (error) {
             console.error('Failed to clear all data:', error);
         }
+    }
+
+    // Fallback methods for web platform when SQLite is not available
+    async getSearchSuggestionsFromAsyncStorage(query, limit = 10) {
+        try {
+            const appData = await this.getAppData();
+            if (!appData) return [];
+
+            const suggestions = new Set();
+            const queryLower = query.toLowerCase();
+
+            // Search through all data types
+            const searchData = [
+                ...appData.generalKnowledge,
+                ...appData.emergencyInfo,
+                ...appData.travelGuidance,
+                ...appData.languagePhrases.map(p => ({ title: p.english, category: p.category })),
+                ...appData.localLaws,
+                ...appData.culturalFacts
+            ];
+
+            searchData.forEach(item => {
+                if (item.title && item.title.toLowerCase().includes(queryLower)) {
+                    suggestions.add(item.title);
+                }
+                if (item.category && item.category.toLowerCase().includes(queryLower)) {
+                    suggestions.add(item.category);
+                }
+            });
+
+            return Array.from(suggestions).slice(0, limit);
+        } catch (error) {
+            console.error('Failed to get search suggestions from AsyncStorage:', error);
+            return [];
+        }
+    }
+
+    async searchContentFromAsyncStorage(query) {
+        try {
+            const appData = await this.getAppData();
+            if (!appData) return [];
+
+            const results = [];
+            const queryLower = query.toLowerCase();
+
+            // Search in general knowledge
+            appData.generalKnowledge.forEach(item => {
+                if (this.matchesQuery(queryLower, item.title, item.content, item.tags)) {
+                    results.push({
+                        id: item.id,
+                        title: item.title,
+                        content: item.content,
+                        type: 'general',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.title, item.content, item.tags)
+                    });
+                }
+            });
+
+            // Search in emergency info
+            appData.emergencyInfo.forEach(item => {
+                if (this.matchesQuery(queryLower, item.title, item.description, null, item.phoneNumber, item.location)) {
+                    results.push({
+                        id: item.id,
+                        title: item.title,
+                        content: item.description,
+                        type: 'emergency',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.title, item.description, null, item.phoneNumber, item.location)
+                    });
+                }
+            });
+
+            // Search in travel guidance
+            appData.travelGuidance.forEach(item => {
+                if (this.matchesQuery(queryLower, item.title, item.description, null, null, item.location, item.tips)) {
+                    results.push({
+                        id: item.id,
+                        title: item.title,
+                        content: item.description,
+                        type: 'travel',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.title, item.description, null, null, item.location, item.tips)
+                    });
+                }
+            });
+
+            // Search in language phrases
+            appData.languagePhrases.forEach(item => {
+                if (this.matchesQuery(queryLower, item.english, item.urdu, null, null, null, null, item.romanized)) {
+                    results.push({
+                        id: item.id,
+                        title: item.english,
+                        content: item.urdu,
+                        type: 'language',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.english, item.urdu, null, null, null, null, item.romanized)
+                    });
+                }
+            });
+
+            // Search in local laws
+            appData.localLaws.forEach(item => {
+                if (this.matchesQuery(queryLower, item.title, item.description, null, null, null, null, null, item.severity, item.applicableTo)) {
+                    results.push({
+                        id: item.id,
+                        title: item.title,
+                        content: item.description,
+                        type: 'law',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.title, item.description, null, null, null, null, null, item.severity, item.applicableTo)
+                    });
+                }
+            });
+
+            // Search in cultural facts
+            appData.culturalFacts.forEach(item => {
+                if (this.matchesQuery(queryLower, item.title, item.description, null, null, item.region, null, null, null, null, item.relatedFacts)) {
+                    results.push({
+                        id: item.id,
+                        title: item.title,
+                        content: item.description,
+                        type: 'cultural',
+                        category: item.category,
+                        relevanceScore: this.calculateRelevanceScore(query, item.title, item.description, null, null, item.region, null, null, null, null, item.relatedFacts)
+                    });
+                }
+            });
+
+            return results.sort((a, b) => b.relevanceScore - a.relevanceScore);
+        } catch (error) {
+            console.error('Failed to search content from AsyncStorage:', error);
+            return [];
+        }
+    }
+
+    async getHomeScreenSearchSuggestionsFromAsyncStorage(query, limit = 10) {
+        try {
+            const appData = await this.getAppData();
+            if (!appData) return [];
+
+            const suggestions = new Set();
+            const queryLower = query.toLowerCase();
+
+            // Search through general knowledge for home screen suggestions
+            appData.generalKnowledge.forEach(item => {
+                if (item.title && item.title.toLowerCase().includes(queryLower)) {
+                    suggestions.add(item.title);
+                }
+            });
+
+            // Add some basic home screen related suggestions
+            const homeScreenSuggestions = [
+                'General Knowledge', 'Emergency Information', 'Travel Guidance',
+                'Language Phrases', 'Local Laws', 'Cultural Facts',
+                'Citizen Services', 'SIM Information', 'E-Challan', 'Passport Tracking'
+            ];
+
+            homeScreenSuggestions.forEach(suggestion => {
+                if (suggestion.toLowerCase().includes(queryLower)) {
+                    suggestions.add(suggestion);
+                }
+            });
+
+            return Array.from(suggestions).slice(0, limit);
+        } catch (error) {
+            console.error('Failed to get home screen search suggestions from AsyncStorage:', error);
+            return [];
+        }
+    }
+
+    matchesQuery(queryLower, title, content, tags, phoneNumber, location, tips, romanized, severity, applicableTo, relatedFacts) {
+        if (!title && !content) return false;
+
+        const titleLower = title ? title.toLowerCase() : '';
+        const contentLower = content ? content.toLowerCase() : '';
+
+        if (titleLower.includes(queryLower) || contentLower.includes(queryLower)) {
+            return true;
+        }
+
+        if (tags && tags.toLowerCase().includes(queryLower)) return true;
+        if (phoneNumber && phoneNumber.includes(queryLower)) return true;
+        if (location && location.toLowerCase().includes(queryLower)) return true;
+        if (tips && tips.toLowerCase().includes(queryLower)) return true;
+        if (romanized && romanized.toLowerCase().includes(queryLower)) return true;
+        if (severity && severity.toLowerCase().includes(queryLower)) return true;
+        if (applicableTo && applicableTo.toLowerCase().includes(queryLower)) return true;
+        if (relatedFacts && relatedFacts.toLowerCase().includes(queryLower)) return true;
+
+        return false;
     }
 }
 

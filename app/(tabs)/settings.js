@@ -1,3 +1,4 @@
+import DarkModeModal from '@/components/DarkModeModal';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
@@ -15,7 +16,7 @@ export default function SettingsScreen() {
     const [lastSyncDate, setLastSyncDate] = useState(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
     const [isInitializing, setIsInitializing] = useState(false);
-    const [isGridView, setIsGridView] = useState(false);
+    const [showDarkModeModal, setShowDarkModeModal] = useState(false);
 
     useEffect(() => {
         checkDataStatus();
@@ -98,6 +99,10 @@ export default function SettingsScreen() {
         );
     };
 
+    const handleThemeModeChange = (mode) => {
+        setThemeMode(mode);
+    };
+
     const settingsSections = [
         {
             title: 'Data Management',
@@ -155,28 +160,7 @@ export default function SettingsScreen() {
                     subtitle: themeMode === 'system' ? 'Follow system' : themeMode === 'dark' ? 'Always on' : 'Always off',
                     icon: 'moon.fill',
                     color: '#6B46C1',
-                    onPress: () => {
-                        Alert.alert(
-                            'Dark Mode',
-                            'Choose your preferred theme',
-                            [
-                                { text: 'Light', onPress: () => setThemeMode('light') },
-                                { text: 'Dark', onPress: () => setThemeMode('dark') },
-                                { text: 'System', onPress: () => setThemeMode('system') },
-                                { text: 'Cancel', style: 'cancel' },
-                            ]
-                        );
-                    },
-                },
-                {
-                    title: 'Card View',
-                    subtitle: isGridView ? 'Grid view (compact)' : 'List view (detailed)',
-                    icon: 'square.grid.2x2',
-                    color: '#007AFF',
-                    onPress: null,
-                    isToggle: true,
-                    toggleValue: isGridView,
-                    onToggle: setIsGridView,
+                    onPress: () => setShowDarkModeModal(true),
                 },
             ],
         },
@@ -300,6 +284,14 @@ export default function SettingsScreen() {
                     </ThemedView>
                 </ScrollView>
             </ThemedView>
+
+            {/* Dark Mode Modal */}
+            <DarkModeModal
+                visible={showDarkModeModal}
+                onClose={() => setShowDarkModeModal(false)}
+                currentMode={themeMode}
+                onSelectMode={handleThemeModeChange}
+            />
         </SafeAreaView>
     );
 }
