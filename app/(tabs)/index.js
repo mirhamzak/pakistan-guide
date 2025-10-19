@@ -9,7 +9,7 @@ import { initializePakistanGuideData } from '@/services/dataInitializer';
 import { storageService } from '@/services/storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Alert, Animated, Dimensions, Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { Alert, Animated, Dimensions, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width } = Dimensions.get('window');
@@ -27,9 +27,14 @@ export default function HomeScreen() {
     const [isGridView, setIsGridView] = useState(false);
     const switchAnimation = useRef(new Animated.Value(0)).current;
     const [isAnimationReady, setIsAnimationReady] = useState(false);
+    const [sectionPressCount, setSectionPressCount] = useState(0);
+    const [dropdownVisible, setDropdownVisible] = useState(false);
+    const [selectedItem, setSelectedItem] = useState(null);
+    const [bookmarks, setBookmarks] = useState([]);
 
     useEffect(() => {
         checkDataInitialization();
+        loadBookmarks();
         // Set animation ready after component mounts
         const timer = setTimeout(() => {
             setIsAnimationReady(true);
@@ -39,6 +44,22 @@ export default function HomeScreen() {
             clearTimeout(timer);
         };
     }, [resetScrollPosition]);
+
+    // Auto-initialize data if not already initialized
+    useEffect(() => {
+        if (!isDataInitialized && !isInitializing) {
+            initializeData();
+        }
+    }, [isDataInitialized, isInitializing]);
+
+    const loadBookmarks = async () => {
+        try {
+            const userBookmarks = await storageService.getBookmarks();
+            setBookmarks(userBookmarks);
+        } catch (error) {
+            console.error('Failed to load bookmarks:', error);
+        }
+    };
 
     const checkDataInitialization = async () => {
         try {
@@ -139,7 +160,7 @@ export default function HomeScreen() {
             category: 'SIM & Mobile Services',
             items: [
                 {
-                    title: 'SIM Information',
+                    title: 'SIMs on CNIC Information',
                     description: 'Check number of SIMs registered on CNIC',
                     icon: 'simcard.fill',
                     color: colors.general,
@@ -356,8 +377,14 @@ export default function HomeScreen() {
         }
     };
 
-    const handleSectionPress = (route) => {
+    const handleSectionPress = async (route) => {
         if (isDataInitialized) {
+            // Increment section press count
+            const newCount = sectionPressCount + 1;
+            setSectionPressCount(newCount);
+            
+            // Show interstitial ad based on configured frequency
+            
             router.push(route);
         } else {
             Alert.alert('Data Required', 'Please initialize the Pakistan Guide data first to access content sections.');
@@ -403,6 +430,62 @@ export default function HomeScreen() {
                 useNativeDriver: false, // Use software rendering
             }).start();
         }
+    };
+
+    const handleLongPress = (item, type) => {
+        console.log('Long press - item:', item); // Debug log
+        console.log('Long press - type:', type); // Debug log
+        setSelectedItem({ ...item, type });
+        setDropdownVisible(true);
+    };
+
+    const isBookmarked = (itemId, itemType) => {
+        return bookmarks.some(b => b.itemId === itemId && b.itemType === itemType);
+    };
+
+    const toggleBookmark = async (item, type) => {
+        try {
+            console.log('Toggle bookmark - item:', item); // Debug log
+            console.log('Toggle bookmark - type:', type); // Debug log
+            
+            const existingBookmark = bookmarks.find(b => b.itemId === (item.id || item.title) && b.itemType === type);
+
+            if (existingBookmark) {
+                await storageService.removeBookmark(existingBookmark.id);
+                setBookmarks(bookmarks.filter(b => b.id !== existingBookmark.id));
+                Alert.alert('Success', 'Bookmark removed');
+            } else {
+                const newBookmark = {
+                    id: `bookmark-${Date.now()}`,
+                    itemId: item.id || item.title,
+                    itemType: type,
+                    title: item.title,
+                    createdAt: new Date().toISOString(),
+                    // Store additional info for citizen features
+                    ...(item.url && {
+                        url: item.url,
+                        description: item.description,
+                        icon: item.icon,
+                        color: item.color
+                    })
+                };
+                
+                console.log('Creating bookmark:', newBookmark); // Debug log
+
+                await storageService.addBookmark(newBookmark);
+                setBookmarks([...bookmarks, newBookmark]);
+                // Alert.alert('Success', 'Bookmark saved');
+            }
+        } catch (error) {
+            console.error('Failed to toggle bookmark:', error);
+            Alert.alert('Error', 'Failed to update bookmark');
+        }
+        setDropdownVisible(false);
+    };
+
+    const closeDropdown = () => {
+        setDropdownVisible(false);
+        setSelectedItem(null);
     };
 
     return (
@@ -504,6 +587,7 @@ export default function HomeScreen() {
                                                 { backgroundColor: colors.card }
                                             ]}
                                             onPress={() => handleSectionPress(item.route)}
+                                            onLongPress={() => handleLongPress(item, item.content)}
                                             disabled={!isDataInitialized}
                                         >
                                             <ThemedView style={[
@@ -563,6 +647,7 @@ export default function HomeScreen() {
                                                         { backgroundColor: colors.card }
                                                     ]}
                                                     onPress={() => handleCitizenFeaturePress(item)}
+                                                    onLongPress={() => handleLongPress(item, item.type)}
                                                 >
                                                     <ThemedView style={[
                                                         isGridView ? styles.sectionIconContainerCompact : styles.sectionIconContainer,
@@ -602,6 +687,7 @@ export default function HomeScreen() {
                         )}
                     </ThemedView>
 
+
                     {/* Quick Emergency Actions */}
                     <ThemedView style={[styles.emergencyContainer, { backgroundColor: colors.background }]}>
                         <ThemedText type="subtitle" style={[styles.sectionTitle, { color: colors.text }]}>
@@ -624,6 +710,7 @@ export default function HomeScreen() {
                         </ThemedView>
                     </ThemedView>
 
+
                     {/* App Info */}
                     <ThemedView style={[styles.infoContainer, { backgroundColor: colors.card }]}>
                         <ThemedText style={[styles.infoText, { color: colors.textSecondary }]}>
@@ -642,6 +729,39 @@ export default function HomeScreen() {
                     }}
                     onResultPress={handleSearchResultPress}
                 />
+
+                {/* Dropdown Modal */}
+                <Modal
+                    visible={dropdownVisible}
+                    transparent={true}
+                    animationType="fade"
+                    onRequestClose={closeDropdown}
+                >
+                    <TouchableOpacity
+                        style={styles.modalOverlay}
+                        activeOpacity={1}
+                        onPress={closeDropdown}
+                    >
+                        <View style={[styles.dropdownContainer, { backgroundColor: colors.card }]}>
+                            <ThemedText style={[styles.dropdownTitle, { color: colors.text }]}>
+                                {selectedItem?.title}
+                            </ThemedText>
+                            <TouchableOpacity
+                                style={[styles.dropdownItem, { backgroundColor: colors.surface }]}
+                                onPress={() => selectedItem && toggleBookmark(selectedItem, selectedItem.type)}
+                            >
+                                <IconSymbol
+                                    name={selectedItem && isBookmarked(selectedItem.id || selectedItem.title, selectedItem.type) ? "bookmark.fill" : "bookmark"}
+                                    size={20}
+                                    color={selectedItem && isBookmarked(selectedItem.id || selectedItem.title, selectedItem.type) ? "#FF9500" : colors.textSecondary}
+                                />
+                                <ThemedText style={[styles.dropdownItemText, { color: colors.text }]}>
+                                    {selectedItem && isBookmarked(selectedItem.id || selectedItem.title, selectedItem.type) ? 'Remove from Favorites' : 'Add to Favorites'}
+                                </ThemedText>
+                            </TouchableOpacity>
+                        </View>
+                    </TouchableOpacity>
+                </Modal>
             </ThemedView>
         </SafeAreaView>
     );
@@ -794,7 +914,7 @@ const styles = StyleSheet.create({
         },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 2,
     },
     sectionCardCompact: {
         flexDirection: 'column',
@@ -810,7 +930,7 @@ const styles = StyleSheet.create({
         },
         shadowOpacity: 0.1,
         shadowRadius: 4,
-        elevation: 3,
+        elevation: 2
     },
     sectionIconContainer: {
         width: 48,
@@ -878,5 +998,42 @@ const styles = StyleSheet.create({
         fontSize: 14,
         lineHeight: 20,
         textAlign: 'center',
+    },
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        justifyContent: 'center',
+        alignItems: 'center',
+    },
+    dropdownContainer: {
+        borderRadius: 12,
+        padding: 20,
+        margin: 20,
+        minWidth: 250,
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 4,
+        },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 8,
+    },
+    dropdownTitle: {
+        fontSize: 18,
+        fontWeight: '600',
+        marginBottom: 16,
+        textAlign: 'center',
+    },
+    dropdownItem: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: 16,
+        borderRadius: 8,
+    },
+    dropdownItemText: {
+        fontSize: 16,
+        marginLeft: 12,
+        fontWeight: '500',
     },
 });

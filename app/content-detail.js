@@ -261,6 +261,7 @@ export default function ContentDetailScreen() {
                                 </ThemedView>
                             )}
 
+
                             {/* Additional Information */}
                             <ThemedView style={[styles.infoCard, { backgroundColor: colors.card }]}>
                                 <ThemedText type="subtitle" style={[styles.infoTitle, { color: colors.text }]}>

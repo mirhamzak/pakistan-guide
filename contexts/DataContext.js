@@ -1,3 +1,4 @@
+import { firebaseService } from '@/services/firebaseService';
 import { storageService } from '@/services/storage';
 import { createContext, useContext, useEffect, useState } from 'react';
 
@@ -24,15 +25,19 @@ export const DataProvider = ({ children }) => {
     const [isDataLoaded, setIsDataLoaded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [lastSyncDate, setLastSyncDate] = useState(null);
+    const [updateAvailable, setUpdateAvailable] = useState(false);
+    const [isUpdating, setIsUpdating] = useState(false);
 
     useEffect(() => {
         loadAllData();
     }, []);
 
-    const loadAllData = async () => {
+    const loadAllData = async (forceRefresh = false) => {
         try {
             setIsLoading(true);
-            const appData = await storageService.getAppData();
+            
+            // Try to fetch from Firebase first, fallback to local
+            const appData = await firebaseService.getContent('all');
             
             if (appData) {
                 setData({
@@ -61,6 +66,61 @@ export const DataProvider = ({ children }) => {
 
     const refreshData = async () => {
         await loadAllData();
+    };
+
+    const checkForUpdates = async () => {
+        try {
+            // Simple update check - you can implement version checking later
+            const isConnected = await firebaseService.testConnection();
+            setUpdateAvailable(isConnected);
+            return { hasUpdate: isConnected, error: null };
+        } catch (error) {
+            console.error('Failed to check for updates:', error);
+            return { hasUpdate: false, error: error.message };
+        }
+    };
+
+    const updateContent = async (type = 'all') => {
+        try {
+            setIsUpdating(true);
+            // For now, just refresh the data
+            await loadAllData(true);
+            return true;
+        } catch (error) {
+            console.error('Failed to update content:', error);
+            return false;
+        } finally {
+            setIsUpdating(false);
+        }
+    };
+
+    const validateContent = async () => {
+        try {
+            // Simple validation - you can implement more complex validation later
+            return [];
+        } catch (error) {
+            console.error('Failed to validate content:', error);
+            return [];
+        }
+    };
+
+    const getContentStats = async () => {
+        try {
+            // Simple stats - you can implement more detailed stats later
+            return {
+                generalKnowledge: data.generalKnowledge?.length || 0,
+                emergencyInfo: data.emergencyInfo?.length || 0,
+                travelGuidance: data.travelGuidance?.length || 0,
+                languagePhrases: data.languagePhrases?.length || 0,
+                localLaws: data.localLaws?.length || 0,
+                culturalFacts: data.culturalFacts?.length || 0,
+                lastUpdated: new Date().toISOString(),
+                version: '1.0.0'
+            };
+        } catch (error) {
+            console.error('Failed to get content stats:', error);
+            return null;
+        }
     };
 
     // Expose refreshData globally for use in other components
@@ -121,7 +181,13 @@ export const DataProvider = ({ children }) => {
         isDataLoaded,
         isLoading,
         lastSyncDate,
+        updateAvailable,
+        isUpdating,
         refreshData,
+        checkForUpdates,
+        updateContent,
+        validateContent,
+        getContentStats,
         getDataByType,
         addBookmark,
         removeBookmark

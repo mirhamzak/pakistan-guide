@@ -49,10 +49,19 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
             }
         } else {
             setSearchResults([]);
-            setSearchSuggestions([]);
-            setShowSuggestions(false);
+            // Show suggestions even when no query is typed
+            loadSearchSuggestions();
+            setShowSuggestions(true);
         }
     }, [searchQuery]);
+
+    // Load suggestions when modal opens
+    useEffect(() => {
+        if (visible && homeScreenData) {
+            loadSearchSuggestions();
+            setShowSuggestions(true);
+        }
+    }, [visible, homeScreenData]);
 
     const loadBookmarks = async () => {
         try {
@@ -79,30 +88,47 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
             const suggestions = [];
             const queryLower = searchQuery.toLowerCase();
 
-            // Get suggestions from content sections
-            homeScreenData.contentSections.forEach((section) => {
-                if (section.title.toLowerCase().includes(queryLower)) {
+            // If no query, show all available options as suggestions
+            if (!searchQuery.trim()) {
+                // Get suggestions from content sections
+                homeScreenData.contentSections.forEach((section) => {
                     suggestions.push(section.title);
-                }
-                if (section.description.toLowerCase().includes(queryLower)) {
-                    suggestions.push(section.description);
-                }
-            });
+                });
 
-            // Get suggestions from citizen features
-            homeScreenData.citizenFeatures.forEach((category) => {
-                if (category.category.toLowerCase().includes(queryLower)) {
+                // Get suggestions from citizen features
+                homeScreenData.citizenFeatures.forEach((category) => {
                     suggestions.push(category.category);
-                }
-                category.items.forEach((item) => {
-                    if (item.title.toLowerCase().includes(queryLower)) {
+                    category.items.forEach((item) => {
                         suggestions.push(item.title);
+                    });
+                });
+            } else {
+                // Filter suggestions based on query
+                // Get suggestions from content sections
+                homeScreenData.contentSections.forEach((section) => {
+                    if (section.title.toLowerCase().includes(queryLower)) {
+                        suggestions.push(section.title);
                     }
-                    if (item.description.toLowerCase().includes(queryLower)) {
-                        suggestions.push(item.description);
+                    if (section.description.toLowerCase().includes(queryLower)) {
+                        suggestions.push(section.description);
                     }
                 });
-            });
+
+                // Get suggestions from citizen features
+                homeScreenData.citizenFeatures.forEach((category) => {
+                    if (category.category.toLowerCase().includes(queryLower)) {
+                        suggestions.push(category.category);
+                    }
+                    category.items.forEach((item) => {
+                        if (item.title.toLowerCase().includes(queryLower)) {
+                            suggestions.push(item.title);
+                        }
+                        if (item.description.toLowerCase().includes(queryLower)) {
+                            suggestions.push(item.description);
+                        }
+                    });
+                });
+            }
 
             setSearchSuggestions(suggestions.slice(0, 8));
         } catch (error) {
@@ -160,6 +186,14 @@ export default function SearchModal({ visible, onClose, homeScreenData, onResult
                 await storageService.addBookmark(newBookmark);
                 setBookmarks([...bookmarks, newBookmark]);
             }
+            
+            // Show success feedback
+            Alert.alert(
+                'Success', 
+                existingBookmark ? 'Bookmark removed' : 'Bookmark saved',
+                [{ text: 'OK' }],
+                { cancelable: true }
+            );
         } catch (error) {
             console.error('Failed to toggle bookmark:', error);
             Alert.alert('Error', 'Failed to update bookmark');

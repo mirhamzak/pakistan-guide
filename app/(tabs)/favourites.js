@@ -4,13 +4,16 @@ import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
 import { storageService } from '@/services/storage';
-import { useEffect, useState } from 'react';
-import { Alert, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import { useCallback, useEffect, useState } from 'react';
+import { Alert, Linking, ScrollView, StyleSheet, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function FavouritesScreen() {
     const { theme } = useTheme();
     const colors = Colors[theme];
+    const router = useRouter();
     const [bookmarks, setBookmarks] = useState([]);
     const [filteredBookmarks, setFilteredBookmarks] = useState([]);
     const [selectedType, setSelectedType] = useState('all');
@@ -19,6 +22,13 @@ export default function FavouritesScreen() {
     useEffect(() => {
         loadBookmarks();
     }, []);
+
+    // Refresh bookmarks when screen comes into focus
+    useFocusEffect(
+        useCallback(() => {
+            loadBookmarks();
+        }, [])
+    );
 
     useEffect(() => {
         filterBookmarks();
@@ -57,6 +67,55 @@ export default function FavouritesScreen() {
         } catch (error) {
             console.error('Failed to remove bookmark:', error);
             Alert.alert('Error', 'Failed to remove bookmark');
+        }
+    };
+
+    const handleBookmarkPress = (bookmark) => {
+        console.log('Bookmark pressed:', bookmark); // Debug log
+        
+        // Map bookmark types to their corresponding routes
+        const routeMap = {
+            general: '../general-knowledge',
+            emergency: '../emergency-info',
+            travel: '../travel-guidance',
+            language: '../language-phrases',
+            law: '../local-laws',
+            cultural: '../cultural-facts',
+        };
+
+        const route = routeMap[bookmark.itemType];
+        if (route) {
+            // This is a content section bookmark (from search or home screen)
+            console.log('Navigating to content section:', route);
+            router.push(route);
+        } else if (bookmark.url) {
+            // Handle citizen features based on their URL
+            console.log('Processing URL:', bookmark.url); // Debug log
+            
+            if (bookmark.url.startsWith('http')) {
+                // Open web URL
+                console.log('Opening web URL:', bookmark.url);
+                Linking.openURL(bookmark.url).catch(err => {
+                    console.error('Failed to open URL:', err);
+                    Alert.alert('Error', 'Failed to open link');
+                });
+            } else if (bookmark.url.startsWith('tel:')) {
+                // Make phone call
+                const phoneNumber = bookmark.url.replace('tel:', '');
+                console.log('Making call to:', phoneNumber);
+                Linking.openURL(`tel:${phoneNumber}`).catch(err => {
+                    console.error('Failed to make call:', err);
+                    Alert.alert('Error', 'Failed to make call');
+                });
+            } else {
+                // Navigate to internal route
+                console.log('Navigating to internal route:', bookmark.url);
+                router.push(bookmark.url);
+            }
+        } else {
+            // No URL and no route mapping, navigate to home screen
+            console.log('No URL or route mapping found, navigating to home screen');
+            router.push('/(tabs)/');
         }
     };
 
@@ -162,7 +221,12 @@ export default function FavouritesScreen() {
                             </ThemedView>
                         ) : (
                             filteredBookmarks.map((bookmark) => (
-                                <ThemedView key={bookmark.id} style={[styles.bookmarkCard, { backgroundColor: colors.card }]}>
+                                <TouchableOpacity
+                                    key={bookmark.id}
+                                    style={[styles.bookmarkCard, { backgroundColor: colors.card }]}
+                                    onPress={() => handleBookmarkPress(bookmark)}
+                                    activeOpacity={0.7}
+                                >
                                     <ThemedView style={[styles.cardHeader, { backgroundColor: colors.card }]}>
                                         <ThemedView style={[styles.cardHeaderLeft, { backgroundColor: colors.card }]}>
                                             <IconSymbol
@@ -182,7 +246,10 @@ export default function FavouritesScreen() {
                                         </ThemedView>
 
                                         <TouchableOpacity
-                                            onPress={() => removeBookmark(bookmark.id)}
+                                            onPress={(e) => {
+                                                e.stopPropagation(); // Prevent triggering the parent onPress
+                                                removeBookmark(bookmark.id);
+                                            }}
                                             style={[styles.removeButton, { backgroundColor: colors.card }]}
                                         >
                                             <IconSymbol name="trash" size={16} color="#FF3B30" />
@@ -193,8 +260,9 @@ export default function FavouritesScreen() {
                                         <ThemedText style={[styles.createdDate, { color: colors.textSecondary }]}>
                                             Saved on {new Date(bookmark.createdAt).toLocaleDateString()}
                                         </ThemedText>
+                                        <IconSymbol name="chevron.right" size={16} color={colors.textSecondary} />
                                     </ThemedView>
-                                </ThemedView>
+                                </TouchableOpacity>
                             ))
                         )}
                     </ThemedView>
@@ -206,7 +274,7 @@ export default function FavouritesScreen() {
                                 Your Bookmarks
                             </ThemedText>
 
-                            <ThemedView style={styles.statsGrid}>
+                            <ThemedView style={[styles.statsGrid, { backgroundColor: colors.card }]}>
                                 {getTypes().slice(1).map((type) => {
                                     const count = bookmarks.filter(b => b.itemType === type).length;
                                     if (count === 0) return null;
@@ -310,13 +378,14 @@ const styles = StyleSheet.create({
     cardHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-start',
+        alignItems: 'center',
         marginBottom: 12,
     },
     cardHeaderLeft: {
         flexDirection: 'row',
         alignItems: 'center',
         flex: 1,
+        marginRight: 8,
     },
     typeIcon: {
         marginRight: 12,
@@ -334,17 +403,21 @@ const styles = StyleSheet.create({
     },
     removeButton: {
         padding: 8,
+        borderRadius: 6,
+        backgroundColor: 'rgba(255, 59, 48, 0.1)',
     },
     cardFooter: {
         flexDirection: 'row',
-        justifyContent: 'flex-end',
+        justifyContent: 'space-between',
+        alignItems: 'center',
     },
     createdDate: {
         fontSize: 12,
     },
     statsContainer: {
         padding: 16,
-        margin: 16,
+        marginHorizontal: 16,
+        marginBottom: "20%",
         borderRadius: 12,
     },
     statsTitle: {

@@ -3,6 +3,7 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
+import { initializePakistanGuideData } from '@/services/dataInitializer';
 import { storageService } from '@/services/storage';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
@@ -52,10 +53,19 @@ export default function SearchScreen() {
             }
         } else {
             setSearchResults([]);
-            setSearchSuggestions([]);
-            setShowSuggestions(false);
+            // Show suggestions even when no query is typed
+            loadSearchSuggestions();
+            setShowSuggestions(true);
         }
     }, [searchQuery]);
+
+    // Load suggestions on initial load
+    useEffect(() => {
+        if (isDataInitialized) {
+            loadSearchSuggestions();
+            setShowSuggestions(true);
+        }
+    }, [isDataInitialized]);
 
     const loadBookmarks = async () => {
         try {
@@ -77,6 +87,12 @@ export default function SearchScreen() {
 
     const loadSearchSuggestions = async () => {
         try {
+            // If no query, get popular suggestions or recent searches
+            if (!searchQuery.trim()) {
+                // Show recent searches as suggestions when no query
+                setSearchSuggestions([]);
+                return;
+            }
             const suggestions = await storageService.getSearchSuggestions(searchQuery, 8);
             setSearchSuggestions(suggestions);
         } catch (error) {
@@ -90,10 +106,20 @@ export default function SearchScreen() {
             return;
         }
 
+        // Data should be automatically initialized, but check anyway
         if (!isDataInitialized) {
-            console.log('Data not initialized, cannot search');
-            Alert.alert('Data Required', 'Please initialize the Pakistan Guide data first to use search functionality.');
-            return;
+            console.log('Data not initialized, attempting to initialize...');
+            // Try to initialize data automatically
+            try {
+                await storageService.initializeDatabase();
+                const data = initializePakistanGuideData();
+                await storageService.saveAppData(data);
+                setIsDataInitialized(true);
+            } catch (error) {
+                console.error('Failed to auto-initialize data:', error);
+                Alert.alert('Data Required', 'Please restart the app to initialize Pakistan Guide data.');
+                return;
+            }
         }
 
         try {
@@ -148,6 +174,14 @@ export default function SearchScreen() {
                 await storageService.addBookmark(newBookmark);
                 setBookmarks([...bookmarks, newBookmark]);
             }
+            
+            // Show success feedback
+            Alert.alert(
+                'Success', 
+                existingBookmark ? 'Bookmark removed' : 'Bookmark saved',
+                [{ text: 'OK' }],
+                { cancelable: true }
+            );
         } catch (error) {
             console.error('Failed to toggle bookmark:', error);
             Alert.alert('Error', 'Failed to update bookmark');
@@ -549,9 +583,10 @@ const styles = StyleSheet.create({
     searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        margin: 16,
+        marginHorizontal: 16,
+        marginBottom: 16,
         paddingHorizontal: 16,
-        paddingVertical: 12,
+        paddingVertical: 5,
         borderRadius: 12,
         borderWidth: 1,
     },
@@ -575,7 +610,7 @@ const styles = StyleSheet.create({
     },
     emptyState: {
         alignItems: 'center',
-        paddingVertical: 40,
+        paddingVertical: 40
     },
     emptyText: {
         fontSize: 16,

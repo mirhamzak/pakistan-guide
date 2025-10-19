@@ -4,92 +4,15 @@ import { ThemedView } from '@/components/themed-view';
 import { IconSymbol } from '@/components/ui/icon-symbol';
 import { Colors, TAB_BAR_HEIGHT } from '@/constants/colors';
 import { useTheme } from '@/contexts/ThemeContext';
-import { initializePakistanGuideData } from '@/services/dataInitializer';
-import { storageService } from '@/services/storage';
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Switch, TouchableOpacity } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 export default function SettingsScreen() {
     const { theme, themeMode, setThemeMode, toggleTheme } = useTheme();
-    const [isDataInitialized, setIsDataInitialized] = useState(false);
-    const [lastSyncDate, setLastSyncDate] = useState(null);
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-    const [isInitializing, setIsInitializing] = useState(false);
     const [showDarkModeModal, setShowDarkModeModal] = useState(false);
 
-    useEffect(() => {
-        checkDataStatus();
-    }, []);
-
-    const checkDataStatus = async () => {
-        try {
-            const initialized = await storageService.isDataInitialized();
-            setIsDataInitialized(initialized);
-
-            if (initialized) {
-                const syncDate = await storageService.getLastSyncDate();
-                setLastSyncDate(syncDate);
-            }
-        } catch (error) {
-            console.error('Failed to check data status:', error);
-        }
-    };
-
-    const initializeData = async () => {
-        try {
-            setIsInitializing(true);
-            await storageService.initializeDatabase();
-
-            const data = initializePakistanGuideData();
-            await storageService.saveAppData(data);
-
-            setIsDataInitialized(true);
-            setLastSyncDate(new Date().toISOString());
-            Alert.alert('Success', 'Pakistan Guide data has been initialized successfully!');
-        } catch (error) {
-            console.error('Failed to initialize data:', error);
-            Alert.alert('Error', 'Failed to initialize Pakistan Guide data');
-        } finally {
-            setIsInitializing(false);
-        }
-    };
-
-    const clearAllData = async () => {
-        Alert.alert(
-            'Clear All Data',
-            'This will remove all Pakistan Guide data and bookmarks. This action cannot be undone.',
-            [
-                {
-                    text: 'Cancel',
-                    style: 'cancel',
-                },
-                {
-                    text: 'Clear Data',
-                    style: 'destructive',
-                    onPress: async () => {
-                        try {
-                            await storageService.clearAllData();
-                            setIsDataInitialized(false);
-                            setLastSyncDate(null);
-                            Alert.alert('Success', 'All data has been cleared');
-                        } catch (error) {
-                            console.error('Failed to clear data:', error);
-                            Alert.alert('Error', 'Failed to clear data');
-                        }
-                    },
-                },
-            ]
-        );
-    };
-
-    const exportData = async () => {
-        Alert.alert(
-            'Export Data',
-            'This feature will be available in a future update. You can manually backup your bookmarks by taking screenshots.',
-            [{ text: 'OK' }]
-        );
-    };
 
     const aboutApp = () => {
         Alert.alert(
@@ -104,44 +27,6 @@ export default function SettingsScreen() {
     };
 
     const settingsSections = [
-        {
-            title: 'Data Management',
-            items: [
-                {
-                    title: 'Data Status',
-                    subtitle: isDataInitialized
-                        ? `Last updated: ${lastSyncDate ? new Date(lastSyncDate).toLocaleDateString() : 'Unknown'}`
-                        : 'Data not initialized',
-                    icon: isDataInitialized ? 'checkmark.circle.fill' : 'exclamationmark.triangle.fill',
-                    color: isDataInitialized ? '#34C759' : '#FF9500',
-                    onPress: null,
-                },
-                ...(isDataInitialized ? [] : [{
-                    title: 'Initialize Data',
-                    subtitle: 'Download Pakistan Guide content for offline access',
-                    icon: 'arrow.down.circle.fill',
-                    color: '#FF9500',
-                    onPress: initializeData,
-                    isButton: true,
-                    buttonText: isInitializing ? 'Initializing...' : 'Initialize',
-                    disabled: isInitializing,
-                }]),
-                {
-                    title: 'Clear All Data',
-                    subtitle: 'Remove all app data and bookmarks',
-                    icon: 'trash.fill',
-                    color: '#FF3B30',
-                    onPress: clearAllData,
-                },
-                {
-                    title: 'Export Data',
-                    subtitle: 'Backup your bookmarks and settings',
-                    icon: 'square.and.arrow.up',
-                    color: '#007AFF',
-                    onPress: exportData,
-                },
-            ],
-        },
         {
             title: 'Preferences',
             items: [

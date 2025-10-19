@@ -751,6 +751,32 @@ class StorageService {
         }
     }
 
+    // Generic storage methods for remote data service
+    async setItem(key, value) {
+        try {
+            await AsyncStorage.setItem(key, value);
+        } catch (error) {
+            console.error(`Failed to set item ${key}:`, error);
+        }
+    }
+
+    async getItem(key) {
+        try {
+            return await AsyncStorage.getItem(key);
+        } catch (error) {
+            console.error(`Failed to get item ${key}:`, error);
+            return null;
+        }
+    }
+
+    async removeItem(key) {
+        try {
+            await AsyncStorage.removeItem(key);
+        } catch (error) {
+            console.error(`Failed to remove item ${key}:`, error);
+        }
+    }
+
     // Fallback methods for web platform when SQLite is not available
     async getSearchSuggestionsFromAsyncStorage(query, limit = 10) {
         try {

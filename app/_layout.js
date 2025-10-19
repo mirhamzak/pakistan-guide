@@ -8,6 +8,7 @@ import 'react-native-reanimated';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { Colors } from '@/constants/colors';
+import { DataProvider } from '@/contexts/DataContext';
 import { TabBarProvider } from '@/contexts/TabBarContext';
 import { ThemeProvider, useTheme } from '@/contexts/ThemeContext';
 
@@ -59,9 +60,11 @@ export default function RootLayout() {
     return (
         <SafeAreaProvider>
             <ThemeProvider>
-                <TabBarProvider>
-                    <RootLayoutNav />
-                </TabBarProvider>
+                <DataProvider>
+                    <TabBarProvider>
+                        <RootLayoutNav />
+                    </TabBarProvider>
+                </DataProvider>
             </ThemeProvider>
         </SafeAreaProvider>
     );
